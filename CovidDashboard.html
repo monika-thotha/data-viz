@@ -1,0 +1,317 @@
+<html>
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<style> circle {fill: lightcoral; stroke: black;} 
+p {
+  height: 30px;
+  width: 900px;
+  background-color: RGBA(100, 100, 100, 0.5);
+  position: absolute;
+
+}
+
+</style>
+<body style="font-family:calibri">
+
+<div id="tooltip" opacity=0></div>
+<body onload='init()'>
+
+<h1 align=center>Covid-19 Impact Analysis</h1>
+
+  <div id="buttonSpace" align=center></div></br>
+  <div id="dropdownSpace" align=center></div>
+  <div id="annotations"align=center font='10'style="color:lightcoral;"></div>
+<svg width=800 height=500>
+
+</svg>
+
+<script>
+
+//var data;
+async function init() {
+
+//******************
+var data = await d3.csv('https://monika-thotha.github.io/data-viz/Covid_Data.csv');
+
+//First Button
+let btn1 = document.createElement("button");
+var annotation1 = "April 2020 First peak: Covid starts spreading across the globe. None of the countries had a vaccine yet.";
+var annotation2 = "Jan 2021 Vaccination rollout: First mass scale vaccines are being administered with US and UK leading the way";
+var annotation3 = "Sep 2021 Next peak: Another peak season in 2021 sees lesser monthly fatalities than before";
+var annotation4 = "Mar 2022 Recent: Death rates continue to remain lower than previous months";
+
+var defaultMonth = '4/1/2020';
+document.getElementById("annotations").innerHTML  = annotation1;
+
+var SelectedMonthYear = defaultMonth;
+var DataMonthYear = [];
+
+btn1.innerHTML = "First Peak";
+document.getElementById("buttonSpace").appendChild(btn1);
+btn1.onclick = function () {
+  newDate = "4/1/2020";
+  dateSel.value=newDate;
+  updateAll(newDate);
+  document.getElementById("annotations").innerHTML  = annotation1;
+};
+
+//Second Button
+let btn2 = document.createElement("button");
+btn2.innerHTML = "Roll Out";
+document.getElementById("buttonSpace").appendChild(btn2);
+btn2.onclick = function () {
+  newDate = "1/1/2021";
+  dateSel.value=newDate;
+  updateAll(newDate);
+  document.getElementById("annotations").innerHTML  = annotation2;
+};
+
+//Third Button
+let btn3 = document.createElement("button");
+btn3.innerHTML = "Next Peak";
+document.getElementById("buttonSpace").appendChild(btn3);
+btn3.onclick = function () {
+  newDate = "9/1/2021";
+  dateSel.value=newDate;
+  updateAll(newDate);
+  document.getElementById("annotations").innerHTML  = annotation3;
+};
+
+//Forth Button
+let btn4 = document.createElement("button");
+btn4.innerHTML = "Recent";
+document.getElementById("buttonSpace").appendChild(btn4);
+btn4.onclick = function () {
+  newDate = "3/1/2022";
+  dateSel.value=newDate;
+  updateAll(newDate);
+  document.getElementById("annotations").innerHTML  = annotation4;
+};
+
+//Dropdown Code
+let dateSel = document.createElement("select");
+var dateValues = ["1/1/2020","2/1/2020","3/1/2020","4/1/2020","5/1/2020","6/1/2020","7/1/2020","8/1/2020","9/1/2020","10/1/2020","11/1/2020","12/1/2020","1/1/2021","2/1/2021","3/1/2021","4/1/2021","5/1/2021","6/1/2021","7/1/2021","8/1/2021","9/1/2021","10/1/2021","11/1/2021","12/1/2021","1/1/2022","2/1/2022","3/1/2022"];
+var dateValuesKeys = ["Jan-2020","Feb-2020","Mar-2020","Apr-2020","May-2020","Jun-2020","Jul-2020","Aug-2020","Sep-2020","Oct-2020","Nov-2020","Dec-2020","Jan-2021","Feb-2021","Mar-2021","Apr-2021","May-2021","Jun-2021","Jul-2021","Aug-2021","Sep-2021","Oct-2021","Nov-2021","Dec-2021","Jan-2022","Feb-2022","Mar-2022"]
+
+document.getElementById("dropdownSpace").appendChild(dateSel);
+
+for (var x in dateValues) {
+  dateSel.options[dateSel.options.length] = new Option(dateValuesKeys[x], dateValues[x]);
+}
+dateSel.value = defaultMonth;
+
+dateSel.onchange = function() {
+  newDate = dateSel.value;
+  updateAll(newDate);
+  document.getElementById("annotations").innerHTML  = "";
+  if(newDate == "4/1/2020" ){
+    document.getElementById("annotations").innerHTML  = annotation1;
+  }
+  if(newDate == "1/1/2021"){
+    document.getElementById("annotations").innerHTML  = annotation2;
+  }
+  if(newDate == "9/1/2021"){
+    document.getElementById("annotations").innerHTML  = annotation3;
+  }
+  if(newDate == "3/1/2022" ){
+    document.getElementById("annotations").innerHTML  = annotation4;
+  }
+}
+
+//Dorpdown END
+
+var defaultMonth = '4/1/2020';
+var SelectedMonthYear = defaultMonth;
+var DataMonthYear = [];
+xdomain = [0,1000000];
+xrange = [0,700];
+ydomain = [0,50];
+yrange = [300,0];
+
+
+
+var xscale = d3.scaleLinear().domain(xdomain).range(xrange);
+var yscale = d3.scaleLinear().domain(ydomain).range(yrange);
+createChart();
+
+function updateAll(MonthYear) {
+  DataMonthYear = updateData(MonthYear);
+  
+  updateChart(DataMonthYear);
+  addToolTip(DataMonthYear);
+}
+updateAll(defaultMonth);
+
+function nextMonthClick(){
+
+  SelectedMonthYear = '2/1/2021';
+  updateAll(SelectedMonthYear);
+}
+function calNextMonth(){
+  a = currentMonth.split("/");
+  if (a[1] = 12){
+    a[2]=a[2]+1;
+  }
+}
+
+//Get Selected Months data
+function updateData(MonthYear) {
+  
+  DataMonthYear =[];
+  for(i=0;i<data.length;i++){
+        var row = data[i];
+        if (row.MonthYear == MonthYear){
+          DataMonthYear.push(row);
+        }        
+    }
+    return DataMonthYear;
+}
+//End Get Selected Months data
+
+
+
+
+function createChart() {
+    d3.select("svg")
+    .append("g")
+    .attr('transform', "translate(" + 50 + "," + 50 + ")");
+
+    
+
+    var x_axis = d3.axisBottom(xscale);
+    //        .tickValues(tvalues)
+    //        .tickFormat(d3.format("~s")); 
+
+    var y_axis = d3.axisLeft(yscale);
+    //        .tickValues(tvalues )
+    //        .tickFormat(d3.format("~s"));  
+
+    d3.select("svg")
+    .append("g")
+    .attr('transform', "translate(" + 50 + "," + 50 + ")")
+    .call(y_axis);
+
+    d3.select("svg")
+    .append("g")
+    .attr('transform', "translate(" + 50 + "," + 350 + ")")
+    .call(x_axis);
+
+//x-Axis label
+    d3.select("svg").append("text")
+    .attr("class", "x label")
+    .attr("text-anchor", "end")
+    .attr("x", 400)
+    .attr("y", 400)
+    .text("Vaccinated per 1M");
+}
+
+//Y-Axis Label
+d3.select("svg").append("text")
+    .attr("class", "y label")
+    .attr("text-anchor", "end")
+    .attr("y", 15)
+    .attr("x", -150)
+    .attr("transform", "rotate(-90)")
+    .text("New Deaths per 100K");
+
+function updateChart(data) {
+//Existing
+    
+    d3.select('svg').select('g')
+      .selectAll('circle')
+      .remove();
+
+    d3.select('svg').select('g')
+      .selectAll('circle')
+      .data(data)
+      .enter()
+      .append('circle')
+        .attr('cx',function(d,i){return xscale(d.Vaccinated_per_1M);})
+        .attr('cy',function(d,i){return yscale(d.New_Deaths_per_100K);})
+        .attr('r',function(d,i){
+                             var circleRad = 5; // + parseInt(d.EngineCylinders);
+                             return circleRad;});
+
+
+//New
+/*
+    d3.select('svg').select('g')
+    .selectAll('circle')
+    .data(data)
+    .join(
+      function(enter) {
+        return enter
+          .append('circle')
+          .attr('cx',function(d,i){return xscale(d.Vaccinated_per_1M);})
+          .attr('cy',function(d,i){return yscale(d.New_Deaths_per_100K);})
+          .attr('r',function(d,i){
+                             var circleRad = 5; // + parseInt(d.EngineCylinders);
+                             return circleRad;});
+      },
+      function(update) {
+        return update;
+      },
+      function(exit) {
+        return exit
+          .transition()
+          .duration(1000)
+          .attr('cy', 300)
+          .remove();
+      }
+    )
+    .transition()
+    .duration(1000)
+    .attr('cx', function(d,i){return xscale(d.Vaccinated_per_1M);})
+*/
+}
+
+//***********
+
+//Tool Tip
+
+function addToolTip(data) {
+/*
+    d3.select('svg').select('g')
+      .selectAll('circle')
+      .append('circle')
+      .data(data)
+      .on("mouseover", function(d,i){ 
+          tooltip.style("opacity", "1")
+               .style("left",(d3.event.pageX)+"px")
+               .style("top",(d3.event.pageY)+"px")
+               .html("Country Name " + d.Country);
+            });
+*/
+
+
+var tooltip = d3.select("#tooltip")
+  .append("div")
+    .style("position", "absolute")
+    .style("visibility", "hidden")
+    .text("I'm a circle!");
+
+d3.select('svg').select('g').selectAll("circle")
+  .data(data)
+  .on("mouseover", function(d,i){ 
+          tooltip.style("visibility", "visible")
+               .style("opacity",1)
+               .style("left",(d3.event.pageX)+"px")
+               .style("top",(d3.event.pageY)+"px")
+               .html("Country " + d.Country 
+                + "</br>Population " + d.Population
+                + "</br>New Deaths per 100K " + d.New_Deaths_per_100K
+                + "</br>Vaccinated per 1M " + d.Vaccinated_per_1M);
+            })
+  .on("mouseout",function(){
+    tooltip.style("opacity",0)});
+
+}
+
+//***********************************
+
+}
+
+
+
+</script>
+</body>
+</html>
